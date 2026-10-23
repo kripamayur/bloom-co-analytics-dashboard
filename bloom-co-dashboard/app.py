@@ -94,8 +94,41 @@ if len(dates) != 2:
     st.info('Select a start and end date.')
     st.stop()
 start, end = pd.Timestamp(dates[0]), pd.Timestamp(dates[1])
-filtered = df[df.region.isin(regions) & df.category.isin(categories) & df.order_date.between(start,end)]
+
+filtered = df[
+    df.region.isin(regions)
+    & df.category.isin(categories)
+    & (df.order_date >= start)
+    & (df.order_date < end + pd.Timedelta(days=1))
+]
+
 completed = filtered[filtered.status == 'Completed'].copy()
+
+
+# Monthly revenue for the selected filters
+monthly_revenue = (
+    completed
+    .groupby(completed.order_date.dt.to_period("M"))
+    ["revenue"]
+    .sum()
+    .sort_index()
+)
+
+# Compare the last two complete calendar months.
+last_complete_month = pd.Timestamp.today().to_period("M") - 1
+previous_month = last_complete_month - 1
+
+current_revenue = monthly_revenue.get(last_complete_month, 0)
+previous_revenue = monthly_revenue.get(previous_month, 0)
+
+if previous_revenue > 0:
+    mom_growth = (
+        (current_revenue - previous_revenue)
+        / previous_revenue
+    ) * 100
+else:
+    mom_growth = None
+
 
 revenue = completed.revenue.sum()
 orders = completed.order_id.nunique()
