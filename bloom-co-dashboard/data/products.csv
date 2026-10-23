@@ -1,0 +1,33 @@
+product_id,product_name,category,unit_price
+P001,Home & Living Item 1,Home & Living,70.76
+P002,Home & Living Item 2,Home & Living,49.65
+P003,Home & Living Item 3,Home & Living,76.09
+P004,Home & Living Item 4,Home & Living,65.93
+P005,Home & Living Item 5,Home & Living,27.93
+P006,Home & Living Item 6,Home & Living,83.46
+P007,Home & Living Item 7,Home & Living,69.95
+P008,Home & Living Item 8,Home & Living,71.52
+P009,Accessories Item 1,Accessories,18.79
+P010,Accessories Item 2,Accessories,35.87
+P011,Accessories Item 3,Accessories,31.65
+P012,Accessories Item 4,Accessories,61.12
+P013,Accessories Item 5,Accessories,46.12
+P014,Accessories Item 6,Accessories,55.61
+P015,Accessories Item 7,Accessories,35.5
+P016,Accessories Item 8,Accessories,24.04
+P017,Stationery Item 1,Stationery,18.86
+P018,Stationery Item 2,Stationery,6.6
+P019,Stationery Item 3,Stationery,25.69
+P020,Stationery Item 4,Stationery,20.79
+P021,Stationery Item 5,Stationery,23.95
+P022,Stationery Item 6,Stationery,13.86
+P023,Stationery Item 7,Stationery,29.27
+P024,Stationery Item 8,Stationery,27.33
+P025,Wellness Item 1,Wellness,61.7
+P026,Wellness Item 2,Wellness,26.68
+P027,Wellness Item 3,Wellness,43.0
+P028,Wellness Item 4,Wellness,17.63
+P029,Wellness Item 5,Wellness,24.26
+P030,Wellness Item 6,Wellness,55.98
+P031,Wellness Item 7,Wellness,59.69
+P032,Wellness Item 8,Wellness,73.05
