@@ -172,3 +172,118 @@ if len(completed):
 else:
     st.warning('No completed orders match these filters. Try widening your selection.')
 st.caption('Portfolio demonstration • Synthetic data generated with a fixed random seed • Revenue excludes cancelled and refunded orders • Repeat rate uses customers with completed orders in the selected view')
+
+
+# ------------------------------------------
+# CUSTOMER ANALYTICS
+# ------------------------------------------
+
+st.divider()
+
+st.header("🌷 Getting to know our customers")
+st.caption(
+    "Understanding who shops with us, "
+    "how often they return, and what they spend."
+)
+
+# Count each customer's unique completed orders
+customer_summary = (
+    completed.groupby("customer_id")
+    .agg(
+        total_orders=("order_id", "nunique"),
+        total_spent=("revenue", "sum"),
+    )
+    .reset_index()
+)
+
+# Segment customers based on their order history
+customer_summary["segment"] = customer_summary["total_orders"].apply(
+    lambda n: "Returning" if n >= 2 else "One-time"
+)
+
+# Calculate customer metrics
+total_customers = len(customer_summary)
+
+returning_customers = (
+    customer_summary["segment"] == "Returning"
+).sum()
+
+returning_rate = (
+    returning_customers / total_customers * 100
+    if total_customers else 0
+)
+
+avg_customer_value = (
+    customer_summary["total_spent"].mean()
+    if total_customers else 0
+)
+
+# Display KPI cards
+col1, col2, col3 = st.columns(3)
+
+col1.metric("Unique customers", f"{total_customers:,}")
+col2.metric("Returning customers", f"{returning_customers:,}")
+col3.metric("Avg. customer spend", f"${avg_customer_value:,.2f}")
+
+# Customer segment visualization
+st.subheader("Customer segments")
+
+segment_counts = (
+    customer_summary["segment"]
+    .value_counts()
+    .reset_index()
+)
+
+segment_counts.columns = ["Segment", "Customers"]
+
+fig = px.pie(
+    segment_counts,
+    names="Segment",
+    values="Customers",
+    hole=0.65,
+    color="Segment",
+    color_discrete_map={
+        "Returning": "#C96E91",
+        "One-time": "#B6A1D5",
+    },
+)
+
+fig.update_layout(
+    paper_bgcolor="rgba(0,0,0,0)",
+    font_color="#663C50",
+    margin=dict(t=20, b=20, l=20, r=20),
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# Customer spending distribution
+st.subheader("Customer spending distribution")
+
+fig = px.histogram(
+    customer_summary,
+    x="total_spent",
+    nbins=20,
+    color_discrete_sequence=["#93BDB0"],
+    labels={
+        "total_spent": "Total customer spend ($)"
+    },
+)
+
+fig.update_layout(
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    font_color="#663C50",
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# Dynamic customer insight
+if total_customers:
+    st.info(
+        f"🌸 **{returning_rate:.1f}%** of customers placed "
+        f"multiple completed orders within the selected filters. "
+        f"Average customer spend was "
+        f"**${avg_customer_value:,.2f}**."
+    )
+else:
+    st.warning("No customers match the current filters.")
