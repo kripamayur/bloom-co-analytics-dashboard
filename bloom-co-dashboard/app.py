@@ -149,7 +149,6 @@ st.sidebar.download_button(
     mime="text/csv",
 )
 
-
 # Monthly revenue for the selected filters
 monthly_revenue = (
     completed
@@ -217,14 +216,182 @@ with overview_tab:
         st.dataframe(top,hide_index=True,use_container_width=True,column_config={'revenue':st.column_config.NumberColumn('Revenue',format='$%.2f')})
 
 with insights_tab:
-    st.subheader('What the numbers tell us')
-    if len(completed):
-        best = completed.groupby('category').revenue.sum().idxmax()
-        st.info(f'✨ **{best}** generated the most revenue in the selected period. The repeat-customer rate is **{repeat_rate:.1f}%** among customers with completed orders in this filtered view. Investigate category-level margins and retention cohorts before making budget decisions.')
-    else:
-        st.warning('No completed orders match these filters. Try widening your selection.')
-    st.caption('Portfolio demonstration • Synthetic data generated with a fixed random seed • Revenue excludes cancelled and refunded orders • Repeat rate uses customers with completed orders in the selected view')
+    st.header("✨ The Growth Garden")
+    st.caption(
+        "Key trends and opportunities identified from the selected data."
+    )
 
+    if len(completed):
+
+        # ------------------------------------------
+        # MONTH-OVER-MONTH REVENUE
+        # ------------------------------------------
+
+        monthly_insights = (
+            completed
+            .assign(
+                month=completed.order_date
+                .dt.to_period("M")
+                .dt.to_timestamp()
+            )
+            .groupby("month", as_index=False)
+            .revenue.sum()
+            .sort_values("month")
+        )
+
+        if len(monthly_insights) >= 2:
+            latest_month = monthly_insights.iloc[-1]
+            previous_month = monthly_insights.iloc[-2]
+
+            previous_month_revenue = previous_month["revenue"]
+            latest_month_revenue = latest_month["revenue"]
+
+            if previous_month_revenue > 0:
+                revenue_growth = (
+                    (latest_month_revenue - previous_month_revenue)
+                    / previous_month_revenue
+                    * 100
+                )
+            else:
+                revenue_growth = None
+        else:
+            revenue_growth = None
+
+
+        # ------------------------------------------
+        # CATEGORY PERFORMANCE
+        # ------------------------------------------
+
+        category_revenue = (
+            completed.groupby("category")["revenue"]
+            .sum()
+            .sort_values(ascending=False)
+        )
+
+        top_category = category_revenue.index[0]
+        top_category_revenue = category_revenue.iloc[0]
+
+        category_share = (
+            top_category_revenue / revenue * 100
+            if revenue else 0
+        )
+
+
+        # ------------------------------------------
+        # REGIONAL PERFORMANCE
+        # ------------------------------------------
+
+        region_revenue = (
+            completed.groupby("region")["revenue"]
+            .sum()
+            .sort_values(ascending=False)
+        )
+
+        top_region = region_revenue.index[0]
+        top_region_revenue = region_revenue.iloc[0]
+
+        region_share = (
+            top_region_revenue / revenue * 100
+            if revenue else 0
+        )
+
+
+        # ------------------------------------------
+        # RETURNING CUSTOMER VALUE
+        # ------------------------------------------
+
+        customer_performance = (
+            completed.groupby("customer_id")
+            .agg(
+                orders=("order_id", "nunique"),
+                revenue=("revenue", "sum")
+            )
+            .reset_index()
+        )
+
+        returning_revenue = customer_performance.loc[
+            customer_performance["orders"] >= 2,
+            "revenue"
+        ].sum()
+
+        returning_revenue_share = (
+            returning_revenue / revenue * 100
+            if revenue else 0
+        )
+
+
+        # ------------------------------------------
+        # DISPLAY INSIGHTS
+        # ------------------------------------------
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("#### 🌸 Revenue momentum")
+
+            if revenue_growth is not None:
+                direction = (
+                    "increased" if revenue_growth >= 0
+                    else "decreased"
+                )
+
+                st.write(
+                    f"Revenue **{direction} "
+                    f"{abs(revenue_growth):.1f}%** "
+                    f"from the previous month."
+                )
+            else:
+                st.write(
+                    "Not enough monthly data to calculate "
+                    "revenue growth."
+                )
+
+            st.markdown("#### 🌷 Category leader")
+
+            st.write(
+                f"**{top_category}** generated "
+                f"**{category_share:.1f}%** of total revenue."
+            )
+
+        with col2:
+            st.markdown("#### 🪻 Strongest market")
+
+            st.write(
+                f"**{top_region}** was the highest-revenue "
+                f"region, contributing "
+                f"**{region_share:.1f}%** of sales."
+            )
+
+            st.markdown("#### 💗 Customer loyalty")
+
+            st.write(
+                f"Customers with multiple completed orders "
+                f"generated **{returning_revenue_share:.1f}%** "
+                f"of revenue."
+            )
+
+        st.divider()
+
+        st.subheader("💡 Business takeaway")
+
+        if returning_revenue_share >= 50:
+            st.success(
+                "Returning customers generate a substantial "
+                "share of revenue. Retention initiatives such "
+                "as loyalty programs and personalized offers "
+                "could help protect and grow this customer base."
+            )
+        else:
+            st.info(
+                "Revenue currently depends heavily on one-time "
+                "customers. Increasing repeat purchases could "
+                "be an opportunity for sustainable growth."
+            )
+
+    else:
+        st.warning(
+            "No completed orders match the current filters."
+        )
 
 # ------------------------------------------
 # CUSTOMER ANALYTICS
