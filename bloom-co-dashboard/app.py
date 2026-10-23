@@ -122,6 +122,9 @@ st.markdown(
 st.caption(
     "Explore sales, customers, product performance, and more."
 )
+
+st.sidebar.markdown("## 🌷 Explore the garden")
+st.sidebar.caption("Filter your business performance")
 regions = st.sidebar.multiselect('Regions', sorted(df.region.unique()), default=sorted(df.region.unique()))
 categories = st.sidebar.multiselect('Categories', sorted(df.category.unique()), default=sorted(df.category.unique()))
 dates = st.sidebar.date_input('Order date range', (df.order_date.min().date(), df.order_date.max().date()), min_value=df.order_date.min().date(), max_value=df.order_date.max().date())
@@ -227,35 +230,44 @@ with insights_tab:
         # MONTH-OVER-MONTH REVENUE
         # ------------------------------------------
 
-        monthly_insights = (
-            completed
-            .assign(
-                month=completed.order_date
-                .dt.to_period("M")
-                .dt.to_timestamp()
-            )
-            .groupby("month", as_index=False)
-            .revenue.sum()
-            .sort_values("month")
-        )
 
-        if len(monthly_insights) >= 2:
-            latest_month = monthly_insights.iloc[-1]
-            previous_month = monthly_insights.iloc[-2]
+# Compare the last two full calendar months
+# within the selected date range.
 
-            previous_month_revenue = previous_month["revenue"]
-            latest_month_revenue = latest_month["revenue"]
+last_full_month = (
+    pd.Timestamp(end).to_period("M") - 1
+    if end < end.to_period("M").end_time.normalize()
+    else end.to_period("M")
+)
 
-            if previous_month_revenue > 0:
-                revenue_growth = (
-                    (latest_month_revenue - previous_month_revenue)
-                    / previous_month_revenue
-                    * 100
-                )
-            else:
-                revenue_growth = None
-        else:
-            revenue_growth = None
+previous_month = last_full_month - 1
+
+monthly_totals = (
+    completed.groupby(
+        completed.order_date.dt.to_period("M")
+    )["revenue"].sum()
+)
+
+latest_month_revenue = monthly_totals.get(
+    last_full_month, 0
+)
+previous_month_revenue = monthly_totals.get(
+    previous_month, 0
+)
+
+# Only compare when both entire months are selected
+if (
+    start <= previous_month.start_time
+    and end >= last_full_month.end_time.normalize()
+    and previous_month_revenue > 0
+):
+    revenue_growth = (
+        (latest_month_revenue - previous_month_revenue)
+        / previous_month_revenue * 100
+    )
+else:
+    revenue_growth = None
+
 
 
         # ------------------------------------------
@@ -506,3 +518,13 @@ with customers_tab:
         )
     else:
         st.warning("No customers match the current filters.")
+
+st.divider()
+st.markdown(
+    "<div style='text-align:center; color:#9F7183; "
+    "font-size:13px; padding:16px;'>"
+    "✿ Bloom & Co. · Made with Python, SQL & a little love · "
+    "Synthetic data for portfolio demonstration"
+    "</div>",
+    unsafe_allow_html=True
+)
