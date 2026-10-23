@@ -231,42 +231,42 @@ with insights_tab:
         # ------------------------------------------
 
 
-# Compare the last two full calendar months
-# within the selected date range.
+        # Compare the last two full calendar months
+        # within the selected date range.
 
-last_full_month = (
-    pd.Timestamp(end).to_period("M") - 1
-    if end < end.to_period("M").end_time.normalize()
-    else end.to_period("M")
-)
+        last_full_month = (
+            pd.Timestamp(end).to_period("M") - 1
+            if end < end.to_period("M").end_time.normalize()
+            else end.to_period("M")
+        )
 
-previous_month = last_full_month - 1
+        previous_month = last_full_month - 1
 
-monthly_totals = (
-    completed.groupby(
-        completed.order_date.dt.to_period("M")
-    )["revenue"].sum()
-)
+        monthly_totals = (
+            completed.groupby(
+                completed.order_date.dt.to_period("M")
+            )["revenue"].sum()
+        )
 
-latest_month_revenue = monthly_totals.get(
-    last_full_month, 0
-)
-previous_month_revenue = monthly_totals.get(
-    previous_month, 0
-)
+        latest_month_revenue = monthly_totals.get(
+            last_full_month, 0
+        )
+        previous_month_revenue = monthly_totals.get(
+            previous_month, 0
+        )
 
-# Only compare when both entire months are selected
-if (
-    start <= previous_month.start_time
-    and end >= last_full_month.end_time.normalize()
-    and previous_month_revenue > 0
-):
-    revenue_growth = (
-        (latest_month_revenue - previous_month_revenue)
-        / previous_month_revenue * 100
-    )
-else:
-    revenue_growth = None
+        # Only compare when both entire months are selected
+        if (
+            start <= previous_month.start_time
+            and end >= last_full_month.end_time.normalize()
+            and previous_month_revenue > 0
+        ):
+            revenue_growth = (
+                (latest_month_revenue - previous_month_revenue)
+                / previous_month_revenue * 100
+            )
+        else:
+            revenue_growth = None
 
 
 
